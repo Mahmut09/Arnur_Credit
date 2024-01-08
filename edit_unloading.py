@@ -97,7 +97,7 @@ def delete_r_with_deferment(df):
         
         if pd.notnull(credit_product_value):
             credit_product_lower = str(credit_product_value).lower()
-            if 'отсрочка' or 'сусн' in credit_product_lower:
+            if ('отсрочка' in credit_product_lower) or ('сусн' in credit_product_lower):
                 return str(contract_value).rstrip('R')  # Удаляем все "R" в конце строки
 
         return contract_value
@@ -135,6 +135,19 @@ def create_level_of_delinquency_column(value):
         return 3
     else:
         return 4
+
+def calculate_restructuring(value):
+    print(value)
+    if "RRRR" in str(value):
+        return 4
+    elif "RRR" in str(value):
+        return 3
+    elif "RR" in str(value):
+        return 2
+    elif "R" in str(value):
+        return 1
+    else:
+        return 0
 
 
 df = pd.read_excel(file_path, skiprows=6)
@@ -178,6 +191,8 @@ df = fill_na_with_zero(df, "Остаток суммы МКЛ")
 df = fill_na_with_zero(df, "Количество дней просрочки фактическое")
 
 df['Уровень просрочки'] = df['Количество дней просрочки фактическое'].apply(create_level_of_delinquency_column)
+
+df['Реструктуризация'] = df['Контракт'].apply(calculate_restructuring)
 
 df = fill_na_with_zero(df, "Списания")
 
