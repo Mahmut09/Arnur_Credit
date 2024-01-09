@@ -1,10 +1,11 @@
+import os
 import pandas as pd
 from math import isnan
-# Нет колонки "реструктуризация", "Списания"
+from get_last_day_of_prev_month import get_last_day_of_previous_month
 
 columns_to_delete = ["Unnamed: 0", "№ по гр.", "Филиал", "Источник финансирования", "Баланс по сборам", "Баланс по госпошлине", "Баланс предоплаты по ОС", "Баланс предоплаты по %", "Баланс по дисконту", "Баланс по регулярному резерву по ОС", "Баланс по регулярному резерву по процентам", "Баланс по резерву МСФО", "Резерв МСФО по процентам", "Исполнительная надпись", "Тип займа", "Статус контракта", "Группа", "Групповое соглашение", "Остановка начисления процентов", "Дата остановки начисления процентов", "Остановка начисления штрафовв", "Дата остановки начисления  штрафов", "Вид деятельности", "Подвид деятельности", "Подцель микрокредита", "Тип залога", "Рыночная стоимость", "Залоговая стоимость", "Ступень займа", "ИИН", "Рекомендации по скорингу (КДН)", "Дата последней оплаты процентов", "Статус Судебник", "Ставка резерва по контракту на % и штрафы", "ID контракта", "Специалист по займам", "Дата рождения", "Просрочка ОС", "Просрочка %", "ИП", "Группа кредитных продуктов", "Пол клиента", "Факт.дни просрочки ОС, %, штрафы, отсроч %", "Дата создания Линии кредитов", "Номер кошелька", "Подразделение Линии кредитов", "Дата доступности Линии кредитов", "Номер линии кредитов", "ID линии кредитов", "Текущий лимит", "Магазин Линии кредитов", "GUID клиента", "Подпись кредитной линии", "Сумма Лимита Линии кредитов", "ID кошелька", "Баланс ОС, %, штрафы, отсроч %", "Ставка резерва по контракту на ОС", "Количество дней просрочки по статусу", "Пользовательский статус"]
-file_path = "./Провизия Арнур/Открытые займы 30.11.2023 НЕ редактированная .xlsx"
-segment_file_path = "./Провизия Арнур/30.11.2023/Сегмент.xlsx"
+file_path = "./Провизия Арнур/Открытые займы 30.11.2023 НЕ редактированная.xlsx"
+segment_file_path = "C:\Users\А-Бизнес\Desktop\Arnur_Credit\Сегмент.xlsx"
 
 def add_new_column(df, column_before_insert, column_name, value):
     df.insert(loc=column_before_insert + 1, column=column_name, value=value)
@@ -88,7 +89,6 @@ def insert_GESF_value(df, without_GESF_list, replacement_values):
     df.loc[indices_to_replace, 'Ставка ГЭСВ'] = replacement_values
     
     return df
-
 # Если есть слово отсрочка в колоне кредитный продукт, то вконце контракта убираем Р 
 def delete_r_with_deferment(df):
     def remove_r_from_contract(row):
@@ -98,7 +98,7 @@ def delete_r_with_deferment(df):
         if pd.notnull(credit_product_value):
             credit_product_lower = str(credit_product_value).lower()
             if ('отсрочка' in credit_product_lower) or ('сусн' in credit_product_lower):
-                return str(contract_value).rstrip('R')  # Удаляем все "R" в конце строки
+                return str(contract_value).rstrip('R')
 
         return contract_value
     
@@ -137,7 +137,6 @@ def create_level_of_delinquency_column(value):
         return 4
 
 def calculate_restructuring(value):
-    print(value)
     if "RRRR" in str(value):
         return 4
     elif "RRR" in str(value):
@@ -196,5 +195,8 @@ df['Реструктуризация'] = df['Контракт'].apply(calculate_
 
 df = fill_na_with_zero(df, "Списания")
 
+prev_month_date = get_last_day_of_previous_month()
+os.mkdir(prev_month_date)
+open_loans_file_name = f"Открытые займы {prev_month_date}"
 
-df.to_excel("test.xlsx", index=False)
+df.to_excel(f"./{prev_month_date}/{open_loans_file_name}.xlsx", index=False)
